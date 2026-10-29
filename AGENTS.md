@@ -19,6 +19,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 4. 모듈은 공개 API로만 노출된다. 내부는 언제든 바꿀 수 있다.
 5. 공유 코드는 예상만으로 만들지 않는다. 구현에서 실제 중복이 확인되면 아래로 추출한다.
 
+# 프로젝트 맥락
+
+- 앱 전체의 제품 전제는 `PRODUCT.md`에 있다.
+- 다시 쓰일 결정은 `docs/decisions/README.md` 색인에서 주제를 골라 해당 계약만 읽는다.
+
 # 언어
 
 모든 대화는 한글로 한다. 답변, 질문, 커밋 메시지, PR 문안까지 해당된다.
