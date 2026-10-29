@@ -18,7 +18,7 @@ import {
 import { drawScene } from "./draw-scene";
 
 type StageProps = {
-  face: HTMLCanvasElement;
+  face: HTMLCanvasElement | null;
   onFinished: (upgrade: number) => void;
 };
 
