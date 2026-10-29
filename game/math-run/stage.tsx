@@ -11,10 +11,10 @@ import {
   STAGES,
   stepWorld,
   WORLD,
-  type Input,
   type WorldState,
 } from "@/game/world";
 
+import { createControls, type Action } from "./controls";
 import { drawScene } from "./draw-scene";
 
 type StageProps = {
@@ -22,7 +22,7 @@ type StageProps = {
   onFinished: (upgrade: number) => void;
 };
 
-const KEYS: Record<string, keyof Input> = {
+const KEYS: Record<string, Action> = {
   ArrowLeft: "left",
   KeyA: "left",
   ArrowRight: "right",
@@ -35,7 +35,7 @@ const KEYS: Record<string, keyof Input> = {
 export function Stage({ face, onFinished }: StageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef(createWorld());
-  const inputRef = useRef<Input>({ left: false, right: false, jump: false });
+  const controlsRef = useRef(createControls());
   const onFinishedRef = useRef(onFinished);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [hud, setHud] = useState({ stageIndex: 0, collected: 0 });
@@ -58,14 +58,18 @@ export function Stage({ face, onFinished }: StageProps) {
 
     function tick(now: number) {
       const before = worldRef.current;
-      const after = stepWorld(before, inputRef.current, (now - last) / 1000);
+      const after = stepWorld(
+        before,
+        controlsRef.current.consume(),
+        (now - last) / 1000
+      );
       last = now;
       worldRef.current = after;
       drawScene(ctx!, after, face);
 
       if (after.stageIndex !== before.stageIndex) syncHud(after);
       if (after.status === "quiz" && before.status !== "quiz") {
-        inputRef.current = { left: false, right: false, jump: false };
+        controlsRef.current.releaseAll();
         const subject = STAGES[after.stageIndex].subject;
         setQuiz(subject === "english" ? createWordQuiz() : createQuiz());
       }
@@ -82,23 +86,34 @@ export function Stage({ face, onFinished }: StageProps) {
         const action = KEYS[event.code];
         if (!action || worldRef.current.status !== "running") return;
         event.preventDefault();
-        inputRef.current = { ...inputRef.current, [action]: pressed };
+        if (pressed && !event.repeat) controlsRef.current.press(action);
+        if (!pressed) controlsRef.current.release(action);
       };
     }
     const onKeyDown = onKey(true);
     const onKeyUp = onKey(false);
+    // 창이 포커스를 잃으면 keyup이 오지 않으므로 누르던 입력을 모두 놓는다.
+    const releaseAll = () => controlsRef.current.releaseAll();
+    const onVisibility = () => {
+      if (document.hidden) releaseAll();
+    };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", releaseAll);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", releaseAll);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [face]);
 
-  function hold(action: keyof Input, pressed: boolean) {
-    inputRef.current = { ...inputRef.current, [action]: pressed };
+  function hold(action: Action, pressed: boolean) {
+    if (pressed) controlsRef.current.press(action);
+    else controlsRef.current.release(action);
   }
 
   function handleSolved() {
@@ -114,8 +129,9 @@ export function Stage({ face, onFinished }: StageProps) {
       <div className="flex flex-col items-center gap-1">
         <h2 className="font-heading text-xl font-semibold">{stage.name}</h2>
         <p className="text-center text-sm text-muted-foreground">
-          버섯 {hud.collected} / {stage.mushrooms.length} · 방향키로 걷고 위쪽
-          키나 스페이스로 점프해요. 적과 블록은 점프로 피해요
+          버섯 {hud.collected} / {stage.mushrooms.length} · ← → 버튼으로 걷고 ↑
+          버튼으로 점프해요. 키보드의 방향키와 스페이스도 돼요. 적과 블록은
+          점프로 넘어요
         </p>
       </div>
       <canvas
@@ -145,8 +161,8 @@ export function Stage({ face, onFinished }: StageProps) {
 
 type ControlButtonProps = {
   label: string;
-  action: keyof Input;
-  hold: (action: keyof Input, pressed: boolean) => void;
+  action: Action;
+  hold: (action: Action, pressed: boolean) => void;
   children: React.ReactNode;
 };
 
