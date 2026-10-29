@@ -14,7 +14,7 @@ import {
 import { drawCharacter } from "@/game/character";
 
 type ResultCardProps = {
-  face: HTMLCanvasElement;
+  face: HTMLCanvasElement | null;
   upgrade: number;
   onRetry: () => void;
 };

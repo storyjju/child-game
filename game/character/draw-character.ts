@@ -89,6 +89,17 @@ export function drawCharacter(
     ctx.beginPath();
     ctx.arc(footX, faceCy, faceD / 2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = "#1f2937";
+    for (const dx of [-9, 9]) {
+      ctx.beginPath();
+      ctx.arc(footX + dx * s, faceCy - 5 * s, 3.2 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = "#1f2937";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(footX, faceCy + 3 * s, 11 * s, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
   }
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 3;
