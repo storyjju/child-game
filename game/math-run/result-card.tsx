@@ -12,14 +12,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { drawCharacter } from "@/game/character";
+import { ParentRecord, type PlayRecord } from "@/game/record";
 
 type ResultCardProps = {
   face: HTMLCanvasElement | null;
   upgrade: number;
+  records: PlayRecord[];
   onRetry: () => void;
 };
 
-export function ResultCard({ face, upgrade, onRetry }: ResultCardProps) {
+export function ResultCard({
+  face,
+  upgrade,
+  records,
+  onRetry,
+}: ResultCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -47,10 +54,11 @@ export function ResultCard({ face, upgrade, onRetry }: ResultCardProps) {
           className="mx-auto h-auto w-full max-w-xs rounded-xl bg-sky-100"
         />
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col gap-3">
         <Button size="lg" className="h-12 w-full text-base" onClick={onRetry}>
           다시 하기
         </Button>
+        <ParentRecord records={records} />
       </CardFooter>
     </Card>
   );

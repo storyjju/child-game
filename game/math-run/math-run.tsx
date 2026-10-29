@@ -12,6 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PhotoPicker } from "@/game/character";
+import {
+  saveRecord,
+  summarizePlay,
+  type PlayRecord,
+  type SolveTime,
+} from "@/game/record";
 
 import { ResultCard } from "./result-card";
 import { Stage } from "./stage";
@@ -25,10 +31,16 @@ export function MathRun() {
   const [run, setRun] = useState(0);
   const [finalUpgrade, setFinalUpgrade] = useState(0);
 
-  const handleFinished = useCallback((upgrade: number) => {
-    setFinalUpgrade(upgrade);
-    setPhase("finished");
-  }, []);
+  const [records, setRecords] = useState<PlayRecord[]>([]);
+
+  const handleFinished = useCallback(
+    (upgrade: number, solveTimes: SolveTime[]) => {
+      setFinalUpgrade(upgrade);
+      setRecords(saveRecord(summarizePlay(solveTimes, Date.now())));
+      setPhase("finished");
+    },
+    [],
+  );
 
   /** 사진이 없으면(null) 기본 캐릭터로 시작한다. */
   function start(withFace: HTMLCanvasElement | null) {
@@ -46,6 +58,7 @@ export function MathRun() {
       <ResultCard
         face={playerFace}
         upgrade={finalUpgrade}
+        records={records}
         onRetry={() => start(playerFace)}
       />
     );
