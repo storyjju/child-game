@@ -9,8 +9,28 @@ export type Action = keyof Input;
 export function createControls() {
   let held: Input = { left: false, right: false, jump: false };
   let jumpQueued = false;
+  // 퀴즈 중에도 키보드가 눌려 있는지 기록해 두어, 퀴즈가 닫힐 때 걷기를 이어 준다.
+  const keys = new Set<Action>();
+  let suspended = false;
 
   return {
+    keyDown(action: Action) {
+      keys.add(action);
+      if (!suspended) this.press(action);
+    },
+    keyUp(action: Action) {
+      keys.delete(action);
+      this.release(action);
+    },
+    suspend() {
+      suspended = true;
+      this.releaseAll(false);
+    },
+    resume() {
+      suspended = false;
+      if (keys.has("left")) this.press("left");
+      if (keys.has("right")) this.press("right");
+    },
     press(action: Action) {
       held = { ...held, [action]: true };
       if (action === "jump") jumpQueued = true;
@@ -18,7 +38,8 @@ export function createControls() {
     release(action: Action) {
       held = { ...held, [action]: false };
     },
-    releaseAll() {
+    releaseAll(forgetKeys = true) {
+      if (forgetKeys) keys.clear();
       held = { left: false, right: false, jump: false };
       jumpQueued = false;
     },
