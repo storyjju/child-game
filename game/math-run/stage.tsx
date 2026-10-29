@@ -5,6 +5,7 @@ import { ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { createQuiz, createWordQuiz, QuizDialog, type Quiz } from "@/game/quiz";
+import type { SolveTime } from "@/game/record";
 import {
   createWorld,
   solveMushroom,
@@ -19,7 +20,7 @@ import { drawScene } from "./draw-scene";
 
 type StageProps = {
   face: HTMLCanvasElement | null;
-  onFinished: (upgrade: number) => void;
+  onFinished: (upgrade: number, solveTimes: SolveTime[]) => void;
 };
 
 const KEYS: Record<string, Action> = {
@@ -37,6 +38,10 @@ export function Stage({ face, onFinished }: StageProps) {
   const worldRef = useRef(createWorld());
   const controlsRef = useRef(createControls());
   const onFinishedRef = useRef(onFinished);
+  const quizOpenedRef = useRef<{ subject: SolveTime["subject"]; at: number }>(
+    null,
+  );
+  const solveTimesRef = useRef<SolveTime[]>([]);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [hud, setHud] = useState({ stageIndex: 0, collected: 0 });
 
@@ -71,10 +76,11 @@ export function Stage({ face, onFinished }: StageProps) {
       if (after.status === "quiz" && before.status !== "quiz") {
         controlsRef.current.releaseAll();
         const subject = STAGES[after.stageIndex].subject;
+        quizOpenedRef.current = { subject, at: now };
         setQuiz(subject === "english" ? createWordQuiz() : createQuiz());
       }
       if (after.status === "finished") {
-        onFinishedRef.current(after.upgrade);
+        onFinishedRef.current(after.upgrade, solveTimesRef.current);
         return;
       }
       frame = requestAnimationFrame(tick);
@@ -117,6 +123,14 @@ export function Stage({ face, onFinished }: StageProps) {
   }
 
   function handleSolved() {
+    const opened = quizOpenedRef.current;
+    if (opened) {
+      solveTimesRef.current.push({
+        subject: opened.subject,
+        ms: performance.now() - opened.at,
+      });
+      quizOpenedRef.current = null;
+    }
     worldRef.current = solveMushroom(worldRef.current);
     syncHud(worldRef.current);
     setQuiz(null);
