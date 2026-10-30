@@ -77,7 +77,7 @@ export function Stage({ face, route, onFinished }: StageProps) {
 
       if (after.stageIndex !== before.stageIndex) syncHud(after);
       if (after.status === "quiz" && before.status !== "quiz") {
-        controlsRef.current.releaseAll();
+        controlsRef.current.suspend();
         const subject = STAGES[after.stageIndex].subject;
         quizOpenedRef.current = { subject, at: now };
         setQuiz(createQuizFor(subject));
@@ -93,10 +93,11 @@ export function Stage({ face, route, onFinished }: StageProps) {
     function onKey(pressed: boolean) {
       return (event: KeyboardEvent) => {
         const action = KEYS[event.code];
-        if (!action || worldRef.current.status !== "running") return;
-        event.preventDefault();
-        if (pressed && !event.repeat) controlsRef.current.press(action);
-        if (!pressed) controlsRef.current.release(action);
+        if (!action) return;
+        // 퀴즈 중에도 키 상태는 기록하되, 대화상자(Space 등)의 기본 동작은 막지 않는다.
+        if (worldRef.current.status === "running") event.preventDefault();
+        if (pressed && !event.repeat) controlsRef.current.keyDown(action);
+        if (!pressed) controlsRef.current.keyUp(action);
       };
     }
     const onKeyDown = onKey(true);
@@ -135,6 +136,7 @@ export function Stage({ face, route, onFinished }: StageProps) {
       quizOpenedRef.current = null;
     }
     worldRef.current = solveMushroom(worldRef.current);
+    controlsRef.current.resume();
     syncHud(worldRef.current);
     setQuiz(null);
   }
