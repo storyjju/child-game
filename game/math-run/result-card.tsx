@@ -12,20 +12,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { drawCharacter } from "@/game/character";
-import { ParentRecord, type PlayRecord } from "@/game/record";
+import { ParentRecord, type Medals, type PlayRecord } from "@/game/record";
 
 type ResultCardProps = {
   face: HTMLCanvasElement | null;
   upgrade: number;
   records: PlayRecord[];
+  medals: Medals;
   onRetry: () => void;
+  onHome: () => void;
 };
 
 export function ResultCard({
   face,
   upgrade,
   records,
+  medals,
   onRetry,
+  onHome,
 }: ResultCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -58,7 +62,10 @@ export function ResultCard({
         <Button size="lg" className="h-12 w-full text-base" onClick={onRetry}>
           다시 하기
         </Button>
-        <ParentRecord records={records} />
+        <Button variant="outline" size="lg" className="h-12 w-full text-base" onClick={onHome}>
+          처음으로
+        </Button>
+        <ParentRecord records={records} medals={medals} />
       </CardFooter>
     </Card>
   );

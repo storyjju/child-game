@@ -24,22 +24,39 @@ describe("퀴즈 대화상자", () => {
     expect(onSolved).not.toHaveBeenCalled();
   });
 
-  it("영어 단어 퀴즈도 같은 방식으로 틀리면 남고 맞히면 풀린다", () => {
+  it("그림 보기는 이름을 붙여 읽을 수 있게 하고, 틀리면 남고 맞히면 풀린다", () => {
     const onSolved = vi.fn();
-    const word = {
-      question: "apple = ?",
-      options: ["학교", "사과", "우유", "강아지"],
-      answer: "사과",
+    const picture = {
+      question: "apple",
+      options: ["🏫", "🍎", "🥛", "🐶"],
+      answer: "🍎",
+      pictures: true,
+      labels: { "🏫": "학교", "🍎": "사과", "🥛": "우유", "🐶": "강아지" },
     };
-    render(<QuizDialog quiz={word} onSolved={onSolved} />);
+    render(<QuizDialog quiz={picture} onSolved={onSolved} />);
+
+    expect(screen.getByText("apple")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(4);
 
     fireEvent.click(screen.getByRole("button", { name: "학교" }));
-    expect(screen.getByText("apple = ?")).toBeInTheDocument();
+    expect(screen.getByText("apple")).toBeInTheDocument();
     expect(screen.getByText(/다시 해볼까/)).toBeInTheDocument();
     expect(onSolved).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "사과" }));
     expect(onSolved).toHaveBeenCalledTimes(1);
+  });
+
+  it("그림 퀴즈의 안내 문구는 그림을 고르라고 말한다", () => {
+    const picture = {
+      question: "사과",
+      options: ["🍎", "🐶", "🏫", "🥛"],
+      answer: "🍎",
+      pictures: true,
+      labels: { "🍎": "사과", "🐶": "강아지", "🏫": "학교", "🥛": "우유" },
+    };
+    render(<QuizDialog quiz={picture} onSolved={() => {}} />);
+    expect(screen.getByText(/맞는 그림/)).toBeInTheDocument();
   });
 
   it("틀린 뒤에도 계속 다시 고를 수 있고 맞는 보기를 고르면 풀린 것으로 처리된다", () => {
