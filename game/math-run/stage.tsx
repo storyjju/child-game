@@ -152,7 +152,7 @@ export function Stage({ face, onFinished }: StageProps) {
         ref={canvasRef}
         width={WORLD.width}
         height={WORLD.height}
-        aria-label="산수 마을 게임 화면"
+        aria-label={`${stage.name} 게임 화면`}
         className="mx-auto h-auto max-h-[55vh] w-auto max-w-full rounded-xl border bg-sky-100"
       />
       <div className="flex items-center justify-between gap-4">
