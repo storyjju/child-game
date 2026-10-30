@@ -6,6 +6,10 @@ export type Quiz = {
   question: string;
   options: Choice[];
   answer: Choice;
+  /** 보기가 그림일 때 true. 퀴즈 창이 보기를 크게 그린다. */
+  pictures?: boolean;
+  /** 보기별 접근성 이름. 그림 보기를 스크린 리더가 읽을 수 있게 한다. */
+  labels?: Record<string, string>;
 };
 
 export function createQuiz(random: Random = Math.random): Quiz {

@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { createQuiz, createWordQuiz, QuizDialog, type Quiz } from "@/game/quiz";
+import { createQuizFor, QuizDialog, type Quiz } from "@/game/quiz";
 import type { SolveTime } from "@/game/record";
+import type { Subject } from "@/game/subject";
 import {
   createWorld,
   solveMushroom,
@@ -20,6 +21,8 @@ import { drawScene } from "./draw-scene";
 
 type StageProps = {
   face: HTMLCanvasElement | null;
+  /** 이번 판에서 거칠 마을 순서. */
+  route: number[];
   onFinished: (upgrade: number, solveTimes: SolveTime[]) => void;
 };
 
@@ -33,17 +36,17 @@ const KEYS: Record<string, Action> = {
   Space: "jump",
 };
 
-export function Stage({ face, onFinished }: StageProps) {
+export function Stage({ face, route, onFinished }: StageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const worldRef = useRef(createWorld());
+  const worldRef = useRef(createWorld(route));
   const controlsRef = useRef(createControls());
   const onFinishedRef = useRef(onFinished);
-  const quizOpenedRef = useRef<{ subject: SolveTime["subject"]; at: number }>(
+  const quizOpenedRef = useRef<{ subject: Subject; at: number }>(
     null,
   );
   const solveTimesRef = useRef<SolveTime[]>([]);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [hud, setHud] = useState({ stageIndex: 0, collected: 0 });
+  const [hud, setHud] = useState({ stageIndex: route[0], collected: 0 });
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -77,7 +80,7 @@ export function Stage({ face, onFinished }: StageProps) {
         controlsRef.current.suspend();
         const subject = STAGES[after.stageIndex].subject;
         quizOpenedRef.current = { subject, at: now };
-        setQuiz(subject === "english" ? createWordQuiz() : createQuiz());
+        setQuiz(createQuizFor(subject));
       }
       if (after.status === "finished") {
         onFinishedRef.current(after.upgrade, solveTimesRef.current);

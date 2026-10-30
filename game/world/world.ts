@@ -23,6 +23,8 @@ export type EnemyState = { id: string; x: number; dir: 1 | -1 };
 
 /** hurt는 부딪친 뒤 깜빡이는 시간일 뿐이고 충돌을 막아 주지 않는다. */
 export type WorldState = {
+  /** 이번 판에서 거칠 마을(STAGES의 위치) 순서. 한 마을만 고르면 하나뿐이다. */
+  route: number[];
   x: number;
   y: number;
   vy: number;
@@ -40,18 +42,22 @@ function enemiesOf(stage: StageDef): EnemyState[] {
   return stage.enemies.map((e) => ({ id: e.id, x: e.minX, dir: 1 }));
 }
 
-export function createWorld(): WorldState {
+/** 모든 마을을 순서대로 도는 기본 경로. */
+export const ALL_STAGES: number[] = STAGES.map((_, index) => index);
+
+export function createWorld(route: number[] = ALL_STAGES): WorldState {
   return {
+    route,
     x: WORLD.startX,
     y: 0,
     vy: 0,
     onGround: true,
     status: "running",
-    stageIndex: 0,
+    stageIndex: route[0],
     pendingMushroom: null,
     collected: [],
     upgrade: 0,
-    enemies: enemiesOf(STAGES[0]),
+    enemies: enemiesOf(STAGES[route[0]]),
     hurt: 0,
   };
 }
@@ -155,9 +161,10 @@ export function stepWorld(state: WorldState, input: Input, dt: number): WorldSta
   if (mushroom) return { ...next, status: "quiz", pendingMushroom: mushroom.id };
 
   if (x >= stage.flagX) {
-    return state.stageIndex < STAGES.length - 1
-      ? startStage(next, state.stageIndex + 1)
-      : { ...next, status: "finished" };
+    const following = state.route[state.route.indexOf(state.stageIndex) + 1];
+    return following === undefined
+      ? { ...next, status: "finished" }
+      : startStage(next, following);
   }
 
   return next;

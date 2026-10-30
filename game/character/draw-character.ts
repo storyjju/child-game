@@ -1,11 +1,12 @@
-/** 업그레이드 단계가 오를수록 조금씩 커진다. */
+/** 업그레이드 단계가 오를수록 조금씩 커지고, 6단계부터는 더 커지지 않는다. */
 export function characterScale(upgrade: number) {
-  return 1 + 0.12 * upgrade;
+  return 1 + 0.12 * Math.min(upgrade, 6);
 }
 
 /**
  * 발 위치(footX, footY)를 기준으로 캐릭터를 그린다.
- * 단계마다 장식이 하나씩 늘어난다: 1 망토, 2 별, 3 왕관, 4 황금 신발, 5 날개, 6 빛무리.
+ * 단계마다 장식이 하나씩 늘어난다: 1 망토, 2 별, 3 왕관, 4 황금 신발, 5 날개, 6 빛무리,
+ * 7단계부터는 머리 주위의 반짝이는 별이 하나씩 늘어난다(최대 6개).
  */
 export function drawCharacter(
   ctx: CanvasRenderingContext2D,
@@ -107,6 +108,21 @@ export function drawCharacter(
   ctx.arc(footX, faceCy, faceD / 2, 0, Math.PI * 2);
   ctx.stroke();
 
+  if (upgrade > 6) {
+    const count = Math.min(upgrade - 6, 6);
+    const radius = faceD * 0.85;
+    ctx.fillStyle = "#fde047";
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI / 2 + (i - (count - 1) / 2) * 0.55;
+      sparkle(
+        ctx,
+        footX + Math.cos(angle) * radius,
+        faceCy + Math.sin(angle) * radius,
+        6 * s
+      );
+    }
+  }
+
   if (upgrade >= 3) {
     const crownBase = faceTop + 4 * s;
     const w = 34 * s;
@@ -125,4 +141,19 @@ export function drawCharacter(
   }
 
   ctx.restore();
+}
+
+/** 네 갈래로 뾰족한 작은 별을 현재 채우기 색으로 그린다. */
+function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const radius = i % 2 === 0 ? r : r * 0.35;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 4;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
 }

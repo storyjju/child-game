@@ -1,4 +1,5 @@
 export {
+  ALL_STAGES,
   createWorld,
   solveMushroom,
   startStage,

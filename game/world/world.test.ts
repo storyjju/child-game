@@ -238,47 +238,74 @@ describe("위험 요소 배치", () => {
 });
 
 describe("스테이지 이어짐", () => {
-  const lastOf = (index: number) => STAGES[index];
+  const names = ["산수 마을", "곱셈 마을", "국어 마을", "영어 마을"];
+  const subjects = ["math", "multiplication", "korean", "english"];
 
-  it("첫 스테이지의 깃발에 닿으면 영어 마을로 이어지고 업그레이드는 유지된다", () => {
-    const flag = lastOf(0).flagX;
-    const state = at(createWorld(), {
-      x: flag - 5,
-      collected: mushroomIds(0),
+  function nearFlag(index: number, patch: Partial<WorldState> = {}) {
+    const start = startStage(createWorld(), index);
+    return at(start, {
+      x: STAGES[index].flagX - 5,
+      collected: mushroomIds(index),
       upgrade: 3,
-      enemies: createWorld().enemies.map((e) => ({ ...e, x: 0 })),
+      enemies: start.enemies.map((e) => ({ ...e, x: -500 })),
+      ...patch,
     });
-    const next = run(state, right, 0.3);
+  }
 
-    expect(next.status).toBe("running");
-    expect(next.stageIndex).toBe(1);
-    expect(stage(next).name).toBe("영어 마을");
-    expect(stage(next).subject).toBe("english");
-    expect(next.upgrade).toBe(3);
-    expect(next.collected).toEqual([]);
-    expect(next.x).toBeLessThan(flag);
+  it("마을은 산수, 곱셈, 국어, 영어 순서로 네 개다", () => {
+    expect(STAGES.map((s) => s.name)).toEqual(names);
+    expect(STAGES.map((s) => s.subject)).toEqual(subjects);
   });
 
-  it("두 번째 스테이지의 깃발에 닿으면 한 판이 끝난다", () => {
-    const flag = lastOf(1).flagX;
-    const near = at(startStage(createWorld(), 1), {
-      x: flag - 5,
-      collected: mushroomIds(1),
-      upgrade: 6,
-    });
-    const next = run(near, right, 0.3);
+  it("모든 마을 모험은 첫 마을에서 시작하고 깃발마다 다음 마을로 이어지며 업그레이드는 유지된다", () => {
+    expect(createWorld().stageIndex).toBe(0);
+    for (let index = 0; index < 3; index++) {
+      const next = run(nearFlag(index), right, 0.3);
+      expect(next.status).toBe("running");
+      expect(next.stageIndex).toBe(index + 1);
+      expect(stage(next).name).toBe(names[index + 1]);
+      expect(next.upgrade).toBe(3);
+      expect(next.collected).toEqual([]);
+      expect(next.x).toBeLessThan(STAGES[index + 1].flagX);
+    }
+  });
+
+  it("마지막인 영어 마을의 깃발에 닿으면 한 판이 끝난다", () => {
+    const next = run(nearFlag(3, { upgrade: 12 }), right, 0.3);
     expect(next.status).toBe("finished");
-    expect(next.upgrade).toBe(6);
+    expect(next.upgrade).toBe(12);
   });
 
-  it("영어 마을은 산수 마을보다 길고 적과 장애물이 더 많다", () => {
-    expect(STAGES).toHaveLength(2);
-    expect(STAGES[1].width).toBeGreaterThan(STAGES[0].width);
-    expect(STAGES[1].enemies.length).toBeGreaterThan(STAGES[0].enemies.length);
-    expect(STAGES[1].obstacles.length).toBeGreaterThan(
-      STAGES[0].obstacles.length
-    );
-    expect(STAGES[0].enemies.length).toBeGreaterThan(0);
-    expect(STAGES[0].obstacles.length).toBeGreaterThan(0);
+  it("마을 하나만 고르면 그 마을에서 시작하고 그 마을의 깃발에서 끝난다", () => {
+    for (let index = 0; index < STAGES.length; index++) {
+      const picked = createWorld([index]);
+      expect(picked.stageIndex).toBe(index);
+      expect(picked.enemies.map((e) => e.id)).toEqual(
+        STAGES[index].enemies.map((e) => e.id)
+      );
+      const flagNear = at(picked, {
+        x: STAGES[index].flagX - 5,
+        collected: mushroomIds(index),
+        enemies: picked.enemies.map((e) => ({ ...e, x: -500 })),
+      });
+      expect(run(flagNear, right, 0.3).status).toBe("finished");
+    }
+  });
+
+  it("네 마을 모두 움직이는 적과 점프로 넘는 블록이 있고, 마을마다 버섯이 세 개다", () => {
+    for (const def of STAGES) {
+      expect(def.enemies.length).toBeGreaterThan(0);
+      expect(def.obstacles.length).toBeGreaterThan(0);
+      expect(def.mushrooms).toHaveLength(3);
+    }
+  });
+
+  it("영어 마을은 가장 길고 적과 블록이 가장 많다", () => {
+    const english = STAGES[3];
+    for (const def of STAGES.slice(0, 3)) {
+      expect(english.width).toBeGreaterThan(def.width);
+      expect(english.enemies.length).toBeGreaterThanOrEqual(def.enemies.length);
+      expect(english.obstacles.length).toBeGreaterThanOrEqual(def.obstacles.length);
+    }
   });
 });

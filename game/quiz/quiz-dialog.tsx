@@ -29,6 +29,10 @@ export function QuizDialog({ quiz, onSolved }: QuizDialogProps) {
     setMissed(true);
   }
 
+  const prompt = quiz.pictures
+    ? "버섯을 먹으려면 맞는 그림을 골라 봐!"
+    : "버섯을 먹으려면 정답을 골라 봐!";
+
   return (
     <Dialog open>
       <DialogContent showCloseButton={false}>
@@ -37,9 +41,7 @@ export function QuizDialog({ quiz, onSolved }: QuizDialogProps) {
             {quiz.question}
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            {missed
-              ? "다시 해볼까? 천천히 골라 봐!"
-              : "버섯을 먹으려면 정답을 골라 봐!"}
+            {missed ? "다시 해볼까? 천천히 골라 봐!" : prompt}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
@@ -47,7 +49,8 @@ export function QuizDialog({ quiz, onSolved }: QuizDialogProps) {
             <Button
               key={option}
               variant="outline"
-              className="h-16 text-2xl"
+              aria-label={quiz.labels?.[String(option)]}
+              className={quiz.pictures ? "h-24 text-5xl" : "h-16 text-2xl"}
               onClick={() => choose(option)}
             >
               {option}

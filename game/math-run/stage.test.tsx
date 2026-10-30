@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/game/world", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/game/world")>();
   // 첫 프레임에서 영어 마을로 넘어간 상태를 만든다.
-  return { ...actual, stepWorld: (state: object) => ({ ...state, stageIndex: 1 }) };
+  return { ...actual, stepWorld: (state: object) => ({ ...state, stageIndex: 3 }) };
 });
 vi.mock("./draw-scene", () => ({ drawScene: vi.fn() }));
 
@@ -17,7 +17,7 @@ describe("Stage 캔버스 접근성 이름", () => {
   });
 
   it("영어 마을에서는 현재 스테이지 이름을 따른다", async () => {
-    render(<Stage face={null} onFinished={() => {}} />);
+    render(<Stage face={null} route={[0, 1, 2, 3]} onFinished={() => {}} />);
 
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: "영어 마을" })).toBeInTheDocument()
